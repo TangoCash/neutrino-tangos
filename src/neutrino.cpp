@@ -1051,14 +1051,11 @@ int CNeutrinoApp::loadSetup(const char * fname)
 
 	//online services
 	std::string weather_api_key = WEATHER_DEV_KEY;
-	std::string weather_api_ver = WEATHER_DEV_VER;
 #if ENABLE_WEATHER_KEY_MANAGE
 	g_settings.weather_api_key = configfile.getString("weather_api_key", weather_api_key.empty() ? "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" : weather_api_key);
-	g_settings.weather_api_version = configfile.getString("weather_api_ver", weather_api_ver.empty() ? "2.5" : weather_api_ver);
 	g_settings.weather_enabled = configfile.getInt32("weather_enabled", 1);
 #else
 	g_settings.weather_api_key = weather_api_key;
-	g_settings.weather_api_version = weather_api_ver;
 	g_settings.weather_enabled = 1;
 #endif
 	g_settings.weather_enabled = g_settings.weather_enabled && CApiKey::check_weather_api_key();
@@ -1886,7 +1883,6 @@ void CNeutrinoApp::saveSetup(const char * fname)
 	//online services
 #ifndef WEATHER_DEV_KEY
 	configfile.setString( "weather_api_key", g_settings.weather_api_key );
-	configfile.setString( "weather_api_ver", g_settings.weather_api_version );
 	configfile.setInt32( "weather_enabled", g_settings.weather_enabled );
 #endif
 	configfile.setString( "weather_location", g_settings.weather_location );

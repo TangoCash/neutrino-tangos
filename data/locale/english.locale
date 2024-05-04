@@ -2958,7 +2958,6 @@ videomenu.zappingmode_hold Hold screen
 videomenu.zappingmode_mutetilllock Black screen till locked
 videomenu.zappingmode_holdtilllock Hold screen till locked
 weather.api_key Weather API key (OpenWeather)
-weather.api_ver Weather API version
 weather.direction_e E
 weather.direction_ene ENE
 weather.direction_ese ESE

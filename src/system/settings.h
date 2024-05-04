@@ -1024,7 +1024,6 @@ struct SNeutrinoSettings
 
 	//online services
 	std::string weather_api_key;
-	std::string weather_api_version;
 	int weather_enabled;
 	int weather_country;
 
