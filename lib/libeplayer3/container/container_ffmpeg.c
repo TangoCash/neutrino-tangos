@@ -1036,7 +1036,11 @@ static void FFMPEGThread(Context_t *context)
 				}
 
 				pcmPrivateData_t pcmExtradata;
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(61, 0, 0)
+				pcmExtradata.channels              = get_codecpar(audioTrack->stream)->ch_layout.nb_channels;
+#else
 				pcmExtradata.channels              = get_codecpar(audioTrack->stream)->channels;
+#endif
 				pcmExtradata.bits_per_coded_sample = get_codecpar(audioTrack->stream)->bits_per_coded_sample;
 				pcmExtradata.sample_rate           = get_codecpar(audioTrack->stream)->sample_rate;
 				pcmExtradata.bit_rate              = get_codecpar(audioTrack->stream)->bit_rate;
@@ -1177,6 +1181,16 @@ static void FFMPEGThread(Context_t *context)
 							}
 
 							swr = swr_alloc();
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(61, 0, 0)
+							out_channels = c->ch_layout.nb_channels;
+
+							if (c->ch_layout.u.mask == 0)
+							{
+								av_channel_layout_default(&c->ch_layout, c->ch_layout.nb_channels);
+							}
+
+							out_channel_layout = c->ch_layout.u.mask;
+#else
 							out_channels = c->channels;
 
 							if (c->channel_layout == 0)
@@ -1185,6 +1199,7 @@ static void FFMPEGThread(Context_t *context)
 							}
 
 							out_channel_layout = c->channel_layout;
+#endif
 
 							uint8_t downmix = stereo_software_decoder && out_channels > 2 ? 1 : 0;
 #ifdef __sh__
@@ -1200,7 +1215,11 @@ static void FFMPEGThread(Context_t *context)
 								out_channels = 2;
 							}
 
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(61, 0, 0)
+							av_opt_set_int(swr, "in_channel_layout",    c->ch_layout.u.mask,  0);
+#else
 							av_opt_set_int(swr, "in_channel_layout",    c->channel_layout,  0);
+#endif
 							av_opt_set_int(swr, "out_channel_layout",   out_channel_layout, 0);
 							av_opt_set_int(swr, "in_sample_rate",       c->sample_rate,     0);
 							av_opt_set_int(swr, "out_sample_rate",      out_sample_rate,    0);
@@ -1238,7 +1257,11 @@ static void FFMPEGThread(Context_t *context)
 
 						//////////////////////////////////////////////////////////////////////
 						// Update pcmExtradata according to decode parameters
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(61, 0, 0)
+						pcmExtradata.channels              = c->ch_layout.nb_channels;
+#else
 						pcmExtradata.channels              = av_get_channel_layout_nb_channels(out_channel_layout);
+#endif
 						pcmExtradata.bits_per_coded_sample = 16;
 						pcmExtradata.sample_rate           = out_sample_rate;
 						// The data described by the sample format is always in native-endian order
@@ -2532,7 +2555,11 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 
 								int32_t object_type = 2; // LC
 								int32_t sample_index = aac_get_sample_rate_index(get_codecpar(stream)->sample_rate);
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(61, 0, 0)
+								int32_t chan_config = get_codecpar(stream)->ch_layout.nb_channels;
+#else
 								int32_t chan_config = get_chan_config(get_codecpar(stream)->channels);
+#endif
 								ffmpeg_printf(1, "aac object_type %d\n", object_type);
 								ffmpeg_printf(1, "aac sample_index %d\n", sample_index);
 								ffmpeg_printf(1, "aac chan_config %d\n", chan_config);
@@ -2666,7 +2693,11 @@ int32_t container_ffmpeg_update_tracks(Context_t *context, char *filename, int32
 
 							memcpy(track.aacbuf + 78, &codec_id, 2); //codec_id
 
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(61, 0, 0)
+							uint16_t number_of_channels = get_codecpar(stream)->ch_layout.nb_channels;
+#else
 							uint16_t number_of_channels = get_codecpar(stream)->channels;
+#endif
 							memcpy(track.aacbuf + 80, &number_of_channels, 2); //number_of_channels
 
 							uint32_t samples_per_second = get_codecpar(stream)->sample_rate;
