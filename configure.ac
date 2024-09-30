@@ -1,8 +1,13 @@
-define(ver_major, 3)
-define(ver_minor, 12)
-define(ver_micro, 0)
+define(ver_major, 4)
+define(ver_minor, 0)
+# ver_micro counts commits since last tag
+define(ver_micro, m4_esyscmd([
+	GITTAG=$(git tag -l "eVo-*" | tail -n1);
+	GITREV=$(git rev-list $GITTAG..HEAD --count);
+	printf "$GITREV"
+]))
 
-AC_INIT(Neutrino-Tangos, ver_major.ver_minor.ver_micro)
+AC_INIT(Neutrino-Tangos-eVo, ver_major.ver_minor.ver_micro)
 AM_INIT_AUTOMAKE([nostdinc foreign])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
 
