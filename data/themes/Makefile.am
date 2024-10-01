@@ -5,7 +5,8 @@ SUBDIRS = \
 	NI/icons \
 	Olive-3.0/icons/buttons \
 	TangoCash/icons/buttons \
-	TangoCash/icons/hourglass
+	TangoCash/icons/hourglass \
+	Diana/icons
 
 installdir = $(THEMESDIR)
 
@@ -21,6 +22,7 @@ install_DATA = \
 	DarkBlue.theme \
 	DarkBrown.theme \
 	DarkOrange.theme \
+	Diana.theme \
 	dbox-all.theme \
 	DVB2000.theme \
 	GlassHD.theme \
