@@ -842,15 +842,23 @@ cPlayback::~cPlayback()
 
 void cPlayback::RequestAbort()
 {
-	if (player && player->playback && player->playback->isPlaying)
+	if (player && player->playback)
 	{
 		dvbapi_info("%s\n", __func__);
 		mutex.lock();
+
+		if (player && player->playback && player->playback->isPlaying)
+		{
 		Stop();
-		//player->playback->abortRequested = 1;
+			player->playback->abortRequested = 1;
+		}
+		else if (player->playback->isHttp && !player->playback->isPlaying && !player->playback->abortRequested)
+		{
+			player->playback->abortRequested = 1;
+		}
+
 		mutex.unlock();
-		while (player->playback->isPlaying)
-			usleep(100000);
+
 	}
 }
 
