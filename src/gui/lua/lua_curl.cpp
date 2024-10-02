@@ -148,9 +148,7 @@ int CLuaInstCurl::CurlDownload(lua_State *L)
 	useProxy	bool		true (default)
 	followRedir	bool		true
 	maxRedirs	number		20
-	data				string		empty
-	httpheader,
-	custom-header		string		empty 
+	httpheader	table		empty
 */
 
 /*
@@ -239,6 +237,22 @@ Example:
 	bool pass_header = false;//pass headers to the data stream
 	tableLookup(L, "header", pass_header);
 
+	/* httpheader */
+	curl_slist* hlist = NULL;
+	lua_pushstring(L, "httpheader");
+	lua_gettable(L, -2);
+	if (lua_istable(L, -1)) {
+		for (lua_pushnil(L); lua_next(L, -2); lua_pop(L, 2)) {
+			lua_pushvalue(L, -2);
+			const char *val = lua_tostring(L, -2);
+			if (val){
+				hlist = curl_slist_append(hlist, val);
+			}
+		}
+	}
+	lua_pop(L, 1);
+	/* httpheader end*/
+
 	lua_Integer connectTimeout = 20;
 	tableLookup(L, "connectTimeout", connectTimeout);
 
@@ -255,9 +269,6 @@ Example:
 
 	lua_Integer maxRedirs = 20;
 	tableLookup(L, "maxRedirs", maxRedirs);
-	
-	std::string customheader = "";
-	tableLookup(L, "httpheader", customheader) || tableLookup(L, "custom-header", customheader);
 
 	curl_easy_setopt(curl_handle, CURLOPT_URL, url.c_str());
 	if (toFile) {
@@ -279,12 +290,6 @@ Example:
 	if (!userAgent.empty())
 		curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, userAgent.c_str());
 
-	if (!customheader.empty()) {
-		 struct curl_slist *chunk = NULL;
-		 chunk = curl_slist_append(chunk, customheader.c_str());
-		 curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, chunk);
-	}
-		
 	if (!postfields.empty()) {
 		curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDSIZE, static_cast<long>(postfields.length()));
 		curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, postfields.c_str());
@@ -310,7 +315,10 @@ Example:
 	curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, (silent)?1L:0L);
 	curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, (verbose)?1L:0L);
 	curl_easy_setopt(curl_handle, CURLOPT_HEADER, (pass_header)?1L:0L);
-
+	if (hlist) {
+		/* set our custom set of headers */
+		curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, hlist);
+	}
 	progressData pgd;
 
 	if (!silent) {
@@ -364,7 +372,8 @@ Example:
 		if ((res2 == CURLE_OK) && dredirect)
 			msg += std::string("\n	      redirect to: ") + dredirect;
 	}
-
+	if(hlist)
+		curl_slist_free_all(hlist);
 	curl_easy_cleanup(curl_handle);
 	if (toFile)
 		fclose(fp);
