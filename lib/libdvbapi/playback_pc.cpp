@@ -18,12 +18,32 @@ void cPlayback::Close(void)
 	system(cmd);
 }
 
+std::string cPlayback::extractParam(const std::string &hdrs, const std::string &paramName)
+{
+	size_t paramPos = hdrs.find(paramName);
+	if (paramPos != std::string::npos) {
+		size_t valuePos = paramPos + paramName.length();
+		size_t valueEndPos = hdrs.find('&', valuePos);
+		if (valueEndPos == std::string::npos) {
+		    valueEndPos = hdrs.length();
+		}
+		std::string value = hdrs.substr(valuePos, valueEndPos - valuePos);
+
+		size_t trailingSpacePos = value.find_last_not_of(" \t\r\n");
+		if (trailingSpacePos != std::string::npos) {
+		    value.erase(trailingSpacePos + 1);
+		}
+		return value;
+	}
+	return "";
+}
+
 bool cPlayback::Start(std::string filename, std::string headers)
 {
 	return Start((char *) filename.c_str(), 0, 0, 0, 0, 0, headers);
 }
 
-bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, int duration, std::string /*headers*/)
+bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, int duration, std::string headers)
 {
 	printf("%s:%s - filename=%s vpid=%u vtype=%d apid=%u ac3=%d duration=%i\n",
 		FILENAME, __func__, filename, vpid, vtype, apid, ac3, duration);
@@ -34,7 +54,35 @@ bool cPlayback::Start(char *filename, int vpid, int vtype, int apid, int ac3, in
 	printf("[3]###########[%s]##############\n", cmd);
 	system(cmd);
 
-	snprintf(cmd, sizeof(cmd), "(sleep 1; mpv '%s') &", filename);
+	std::string file = filename;
+	if (headers.empty())
+	{
+		size_t pos = file.rfind('#');
+		if (pos != std::string::npos) {
+			std::string val;
+			std::string hdrs = file.substr(pos + 1);
+
+			val = extractParam(hdrs, "User-Agent=");
+			if (!val.empty()) {
+				headers += "User-Agent: " + val + ",";
+			}
+			val = extractParam(hdrs, "Referer=");
+			if (!val.empty()) {
+				headers += "Referer: " + val + ",";
+			}
+			if (!headers.empty()) {
+				file = file.substr(0, pos);
+			}
+		}
+	}	
+	
+	std::string m_head;
+	if (!headers.empty())
+	{
+		m_head = "--http-header-fields=\"" + headers + "\"";
+	}
+	
+	snprintf(cmd, sizeof(cmd), "(sleep 1; mpv '%s' %s) &", file.c_str(), m_head.c_str());
 	printf("[2]###########[%s]##############\n", cmd);
 	system(cmd);
 

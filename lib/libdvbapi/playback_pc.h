@@ -19,7 +19,7 @@ class cPlayback
 		int mAudioStream;
 		int mSubtitleStream;
 		int mTeletextStream;
-
+		std::string extractParam(const std::string &hdrs, const std::string &paramName);
 	public:
 		cPlayback(int);
 		bool Open(playmode_t PlayMode);
